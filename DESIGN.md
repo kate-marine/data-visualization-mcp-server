@@ -1,34 +1,34 @@
-# Design Document — Data Visualization MCP Server
+# Design Document 
 
-## What it is
+## Overview
 
-An MCP (Model Context Protocol) server that gives LLM clients the ability to work with data. A client can upload a dataset, describe how they want it visualized, and get a chart back — all through tool calls in a normal conversation.
-
----
-
-## The problem it solves
-
-LLMs can reason about data but can't render charts. This server bridges that gap by handling the data storage and rendering, while leaving the reasoning and interpretation to the LLM.
+An MCP server that gives clients (currently testing with Claude Desktop) the ability to work with data. A client can upload a dataset, describe how they want it visualized, and get a chart back with tool calls in a normal conversation.
 
 ---
 
-## Core workflow
+## Motivation
 
-```
-Client uploads CSV
-       ↓
-Server stores dataset (ID: ds_xxx)
-       ↓
-Client requests a chart ("bar chart of revenue by city")
-       ↓
-Server creates a VizSpec (ID: vs_xxx) — a recipe, not yet a chart
-       ↓
-Client calls generate_plot
-       ↓
-Server renders PNG + HTML, returns image inline
-```
+LLMs can reason about data but can't always render charts. This server bridges that gap by handling the data storage and rendering, while leaving the reasoning and interpretation to the LLM.
 
-State flows through IDs. Every object the server creates has a unique ID, and subsequent calls reference that ID. This is what allows a multi-turn conversation to build on earlier steps without re-uploading data.
+---
+
+## Workflow
+
+
+1. Client uploads dataset (CSV)
+    
+2. Server stores dataset with an id (ex: ds_xxx)
+
+3. Client requests a chart (ex: "bar chart of revenue by city")
+
+4. Server creates a VizSpec with an id (ex: vs_xxx) 
+
+5. Client calls generate_plot
+
+6. Server creates PNG and HTML if asked for, returns image inline
+
+
+Note: Every object the server creates has a unique ID, and subsequent calls reference that ID. This is what allows a multi-turn conversation to build on earlier steps without re-uploading data.
 
 ---
 
@@ -52,7 +52,7 @@ FastMCP server
      └── models.py            — Dataset, VizSpec, Plot (Pydantic)
 ```
 
-All tools share a single `ResourceStore` instance. State is never passed between tools directly — only through IDs.
+Note: All tools share a single `ResourceStore` instance. State is never passed between tools directly it's only through IDs.
 
 ---
 
@@ -108,6 +108,58 @@ The actual DataFrame is stored separately alongside the Dataset (Pydantic can't 
 | aggregate_dataset | Group by a column, apply a function (sum, mean, count, etc.) |
 | sort_dataset | Reorder rows by a column |
 | select_columns | Drop unwanted columns |
+
+---
+
+## Persistence layout
+
+```
+~/.local/share/data-viz-mcp/
+├── metadata.db        SQLite: datasets and vizspecs tables
+└── frames/
+    ├── ds_abc123.csv  one file per dataset
+    └── ds_def456.csv
+```
+
+Location is overridable via `DATA_VIZ_MCP_DATA_DIR` environment variable.
+
+---
+
+## Tools 
+
+### Dataset tools
+| Tool | Description |
+|------|-------------|
+| `upload_dataset` | Upload a CSV as a raw string; returns a dataset ID |
+| `upload_dataset_from_path` | Load a CSV directly from a file path on disk |
+| `describe_dataset` | Per-column stats: mean/min/max/std for numeric, unique count and top values for categorical |
+| `list_datasets` | List all datasets currently in the store |
+| `get_dataset` | Retrieve metadata for a specific dataset by ID |
+
+### Transform tools
+| Tool | Description |
+|------|-------------|
+| `filter_dataset` | Keep rows matching a condition (eq, gt, lt, contains, etc.); returns a new dataset ID |
+| `aggregate_dataset` | Group by a column and apply a function (sum, mean, count, min, max, median); returns a new dataset ID |
+| `sort_dataset` | Reorder rows by a column ascending or descending; returns a new dataset ID |
+| `select_columns` | Drop unwanted columns; returns a new dataset ID |
+
+### Visualization spec tools
+| Tool | Description |
+|------|-------------|
+| `create_vizspec` | Create a chart recipe: specify dataset, plot type, x/y columns, optional color and grouping |
+| `suggest_vizspec` | Create a VizSpec from a plain English description; returns the spec plus `reasoning` and `confidence` fields |
+| `update_vizspec` | Modify fields on an existing VizSpec (plot type, columns, labels, color, etc.) |
+| `get_vizspec` | Retrieve a VizSpec by ID |
+| `list_vizspecs` | List all VizSpecs in the store |
+
+### Plot tools
+| Tool | Description |
+|------|-------------|
+| `generate_plot` | Render a VizSpec into a PNG (returned inline) and optionally store HTML |
+| `get_plot` | Retrieve a previously rendered plot; `format="png"` returns the image, `format="html"` writes to a temp file and returns the path |
+| `list_plots` | List all rendered plots in the store |
+| `list_plot_types` | List all supported plot type names |
 
 ---
 
