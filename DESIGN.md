@@ -70,61 +70,6 @@ The actual DataFrame is stored separately alongside the Dataset (Pydantic can't 
 
 ---
 
-## Key design decisions
-
-**Immutable datasets.** Transforms (filter, aggregate, sort) always produce a new dataset with a new ID. The source is never modified. This makes exploratory workflows safe — you can branch and try things without destroying your original data.
-
-**VizSpec separates intent from output.** Creating a VizSpec doesn't render anything. This allows a spec to be inspected, updated, and re-rendered without re-specifying everything from scratch.
-
-**Two rendering backends.** Matplotlib produces a static PNG returned inline in the conversation. Plotly produces self-contained interactive HTML written to a temp file. The HTML is ~3MB (Plotly.js is bundled inside), which exceeds MCP's 1MB tool-result limit — so we write to disk and return the file path instead.
-
-**Persistence via SQLite + CSV.** On every write, dataset metadata and vizspec fields are saved to a local SQLite database. The raw DataFrame is saved as a CSV file. On server startup, everything is reloaded. Plots are not persisted — they're derived outputs and are regenerated on demand.
-
-**color_by for multi-series charts.** A single `color_by` field on VizSpec splits any chart into series by a categorical column. In Plotly this is one parameter; in matplotlib it means iterating over groups. This handles the common "show all cities on the same line chart" pattern.
-
----
-
-## Supported plot types
-
-| Type | Use case |
-|------|----------|
-| line | Trends over time |
-| bar | Comparisons across categories |
-| scatter | Relationships between two numeric columns |
-| histogram | Distribution of a single column |
-| area | Cumulative or stacked trends |
-| box | Distribution spread and outliers by group |
-| violin | Distribution shape by group |
-| pie | Part-to-whole proportions |
-| heatmap | Correlation matrix across all numeric columns |
-
----
-
-## Supported transforms
-
-| Transform | What it does |
-|-----------|--------------|
-| filter_dataset | Keep rows matching a condition |
-| aggregate_dataset | Group by a column, apply a function (sum, mean, count, etc.) |
-| sort_dataset | Reorder rows by a column |
-| select_columns | Drop unwanted columns |
-
----
-
-## Persistence layout
-
-```
-~/.local/share/data-viz-mcp/
-├── metadata.db        SQLite: datasets and vizspecs tables
-└── frames/
-    ├── ds_abc123.csv  one file per dataset
-    └── ds_def456.csv
-```
-
-Location is overridable via `DATA_VIZ_MCP_DATA_DIR` environment variable.
-
----
-
 ## Tools 
 
 ### Dataset tools
@@ -161,20 +106,36 @@ Location is overridable via `DATA_VIZ_MCP_DATA_DIR` environment variable.
 | `list_plots` | List all rendered plots in the store |
 | `list_plot_types` | List all supported plot type names |
 
+
 ---
 
-## Persistence layout
+## Supported plot types
 
-```
-~/.local/share/data-viz-mcp/
-├── metadata.db        SQLite: datasets and vizspecs tables
-└── frames/
-    ├── ds_abc123.csv  one file per dataset
-    └── ds_def456.csv
-```
+| Type | Use case |
+|------|----------|
+| line | Trends over time |
+| bar | Comparisons across categories |
+| scatter | Relationships between two numeric columns |
+| histogram | Distribution of a single column |
+| area | Cumulative or stacked trends |
+| box | Distribution spread and outliers by group |
+| violin | Distribution shape by group |
+| pie | Part-to-whole proportions |
+| heatmap | Correlation matrix across all numeric columns |
 
-Location is overridable via `DATA_VIZ_MCP_DATA_DIR` environment variable.
+---
 
+## Key design decisions
+
+**Immutable datasets.** Transforms (filter, aggregate, sort) always produce a new dataset with a new ID. The source is never modified. This makes exploratory workflows safe — you can branch and try things without destroying your original data.
+
+**VizSpec separates intent from output.** Creating a VizSpec doesn't render anything. This allows a spec to be inspected, updated, and re-rendered without re-specifying everything from scratch.
+
+**Two rendering backends.** Matplotlib produces a static PNG returned inline in the conversation. Plotly produces self-contained interactive HTML written to a temp file. The HTML is ~3MB (Plotly.js is bundled inside), which exceeds MCP's 1MB tool-result limit — so we write to disk and return the file path instead.
+
+**Persistence via SQLite + CSV.** On every write, dataset metadata and vizspec fields are saved to a local SQLite database. The raw DataFrame is saved as a CSV file. On server startup, everything is reloaded. Plots are not persisted — they're derived outputs and are regenerated on demand.
+
+**color_by for multi-series charts.** A single `color_by` field on VizSpec splits any chart into series by a categorical column. In Plotly this is one parameter; in matplotlib it means iterating over groups. This handles the common "show all cities on the same line chart" pattern.
 ---
 
 ## Limitations
