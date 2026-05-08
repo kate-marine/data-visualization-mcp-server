@@ -43,7 +43,7 @@ FastMCP server
      ├── tools/datasets.py    — upload, describe, list datasets
      ├── tools/transforms.py  — filter, aggregate, sort, select columns
      ├── tools/specs.py       — create/update/suggest visualization specs
-     └── tools/plots.py       — generate and retrieve rendered charts
+     └── tools/plots.py       — defines tools for generating, retrieving, and listing plots.
      │
      ├── viz/renderer.py      — matplotlib → PNG
      └── viz/interactive.py   — Plotly → self-contained HTML

@@ -1,16 +1,14 @@
 from __future__ import annotations
-
 import io
 import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-
 import pandas as pd
-
 from data_viz_mcp.models import ColumnInfo, Dataset
 from data_viz_mcp.server import err, log_err, log_ok, mcp, store
 
+# defines the MCP tools for dataset handling
 
 def _store_dataframe(name: str, df: pd.DataFrame, op: str) -> str:
     ds_id = store.new_id("ds")
