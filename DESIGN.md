@@ -40,16 +40,30 @@ Claude Desktop
      ▼
 FastMCP server
      │
-     ├── tools/datasets.py    — upload, describe, list datasets
-     ├── tools/transforms.py  — filter, aggregate, sort, select columns
-     ├── tools/specs.py       — create/update/suggest visualization specs
-     └── tools/plots.py       — defines tools for generating, retrieving, and listing plots.
+     ├── tools/datasets.py    — tools to upload, describe, list datasets
+     ├── tools/transforms.py  — tools filter, aggregate, sort, and select columns
+     ├── tools/specs.py       — tools to create, update, suggest visualization specs
+     └── tools/plots.py       — tools to generate, retrieve, and list plots
      │
      ├── viz/renderer.py      — matplotlib → PNG
      └── viz/interactive.py   — Plotly → self-contained HTML
      │
      ├── store.py             — in-memory state (singleton)
      └── models.py            — Dataset, VizSpec, Plot (Pydantic)
+```
+```
+
+
+**datasets.py**    — tools to upload, describe, list datasets
+**transforms.py**  — tools filter, aggregate, sort, and select columns
+**specs.py**       — tools to create, update, suggest visualization specs
+**plots.py**       — tools to generate, retrieve, and list plots
+
+**renderer.py**      — matplotlib → PNG
+**interactive.py**   — Plotly → self-contained HTML
+
+**store.py**             — in-memory state (singleton)
+**models.py**           — Dataset, VizSpec, Plot (Pydantic)
 ```
 
 Note: All tools share a single `ResourceStore` instance. State is never passed between tools directly it's only through IDs.
