@@ -63,3 +63,27 @@ Matplotlib handles static PNG and then plotly handles interactive HTML. Matplotl
 **Data stays in memory forever.** Once a dataset is loaded, it stays in `_dataset_frames` until the server process exits. There is no way to delete a dataset or free memory so for a long-running server processing a bunch of large files this would not be good.
 
 **Limited plot types and very simple ones** Didn't have time to make visualizations more appealing or supportive for more complex data. Same with HTML piece I was more just focused on seeing if could get something working first!
+
+-----
+
+**Reflection on whether this is something that LLMs are helpful with**
+
+Does this tool make it easier to quickly generate visualizations, or is integrating an LLM into this a waste of time? (include details on your solution, i.e. where it struggles, where it is faster than normal, and how you think your design decisions played into that)
+
+I think it definitely depends on what you're asking the system to do and how much more built out it is. For the version I have working right now integrating an LLM definitely speeds the process.
+For example, doing something like generating a chart of "total marketing spend per customer by city" requires four steps to aggregate marketing spend by city, aggregate customers by city, join or divide those results, then plot. Without an LLM it would require the user to know and do each step at a time, which was actually how I was originally testing things using MCP Inspector. With Claude Desktop as the client though you just ask the one question and Claude figures out the sequence of which order of tools to call and reasons about the results along the way. I think having the describe_dataset tool was actually important for this since without it Claude would be guessing at column names. 
+
+LLMs are also helpful for the persistence issue. You might want to return to the same dataset across multiple conversations and because datasets survive server restarts, Claude can pick up where it left off since you just tell it the dataset name and it finds the ID. Otherwise you would I think need to do the re-uploading and re-describing the data every time.
+
+The VizSpec separation — intent recorded separately from rendering — turned out to be genuinely useful. It lets Claude inspect a spec, realize it's wrong, call update_vizspec, and re-render without starting over. In a more stateless design, every correction would require recreating the whole spec from scratch. Also If the server had a single high-level tool, the LLM would just be a natural language wrapper with no ability to adapt or reason about intermediate state. The granular tool design means the LLM's judgment and flexibility actually get used.
+
+Where it struggles
+
+That said the LLM is still very limited in that it can’t see the produced visualization and so has no way to verify that it matches what was intended. You can see this with the month ordering problem where charts with months on the x-axis appear alphabetically (Apr, Aug, Dec...) instead of chronologically unless the data happens to be pre-sorted. A human using matplotlib would see this immediately and fix it where Claude can’t.
+
+Finally if you give it the same prompt twice, Claude might call tools in a different order and ultimately produce a different chart type. The server itself is deterministic in that the same tool calls always produce the same result but the LLM layer above it is not so this adds an aspect of unpredictability that could definitely be a problem
+
+
+Overall assessment
+
+Overall, integrating an LLM makes the most sense for exploratory workflows where the user doesn’t know in advance exactly what they want to see. This way the LLM’s ability to chain tools and reason about results is genuinely useful.
