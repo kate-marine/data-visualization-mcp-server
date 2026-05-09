@@ -46,7 +46,7 @@ FastMCP server
      └── tools/plots.py       — tools to generate, retrieve, and list plots
      │
      ├── viz/renderer.py      — matplotlib → PNG
-     └── viz/interactive.py   — Plotly → self-contained HTML
+     └── viz/interactive.py   — renders interactive HTML visualizations using Plotly Express
      │
      ├── store.py             — in-memory state (singleton)
      └── models.py            — Dataset, VizSpec, Plot (Pydantic)
@@ -59,8 +59,14 @@ FastMCP server
 **specs.py**       — tools to create, update, suggest visualization specs
 **plots.py**       — tools to generate, retrieve, and list plots
 
-**renderer.py**      — matplotlib → PNG
-**interactive.py**   — Plotly → self-contained HTML
+**renderer.py**      — renders static PNG visualizations using Matplotlib
+- Takes a pandas DataFrame and VizSpec
+- Generates a static PNG image based on plot type
+- Returns the PNG as bytes (suitable for image display or storage)
+**interactive.py**   — renders interactive HTML visualizations using Plotly Express
+- Takes a pandas DataFrame and VizSpec
+- Generates an interactive HTML chart based on plot type
+- Returns the full HTML string (with embedded Plotly JS)
 
 **store.py**             — in-memory state (singleton)
 **models.py**           — Dataset, VizSpec, Plot (Pydantic)
