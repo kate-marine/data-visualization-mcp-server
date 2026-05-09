@@ -40,27 +40,17 @@ Matplotlib handles static PNG and then plotly handles interactive HTML. Matplotl
 
 ---
 
-## Simplifications made
+## Simplification and Tradeoffs 
 
 **Single-user.** The server assumes only one trusted client. There is no concept of users, or access control. Any client that can reach the server can read and modify all data.
 
-**In-memory at runtime.** All datasets load into RAM on startup and stay there. There is no lazy loading or eviction. This is fine for demonstration-scale datasets but would not work for very large files or many concurrent datasets. I also only had time to test on a handful of datasets that were very small.
-
-**CSV-only input.** Datasets must be CSV. Have not extended to support for JSON, Excel, APIs, etc. 
-
 **Only tested with Claude desktop as client** Have not attempted testing with other non LLM clients.
 
----
+**CSV-only input.** Datasets must be CSV. Have not extended to support for JSON, Excel, APIs, etc. Chose CSV for simplicity and because requires no additional dependencies (Parquet needs pyarrow). Trradeoff is file size and read speed for large datasets. 
 
-## Tradeoffs considered
+**In-memory at runtime.** All datasets load into RAM on startup and stay there. There is no lazy loading or eviction. This is fine for demonstration-scale datasets but would not work for very large files or many concurrent datasets. I also only had time to test on a handful of datasets that were very small.
 
-**SQLite vs a proper database.** SQLite requires no external process and ships with Python's standard library. The tradeoff is that it does not support concurrent writes — if two clients wrote simultaneously, they could corrupt state. For a single-user server this is acceptable. A multi-user deployment would need PostgreSQL.
-
-**CSV files for DataFrame storage vs Parquet.** CSV was chosen because it requires no additional dependencies (Parquet needs pyarrow). The tradeoff is file size and read speed for large datasets. Parquet would be strictly better for datasets over ~100K rows, but adds a dependency and complicates the setup.
-
-**Heuristic NLP in `suggest_vizspec` vs delegating to the LLM.** `suggest_vizspec` uses regex and fuzzy string matching to interpret plain English descriptions. The honest tradeoff: for an LLM client like Claude, this tool adds almost no value — Claude can read the column names and call `create_vizspec` directly with better judgment. The tool is more useful for non-LLM clients (scripts, dashboards) that can pass a string but cannot reason about it. Including it was a useful exercise in understanding where LLM capability ends and server-side logic begins.
-
-**Plotly HTML size.** Self-contained Plotly HTML bundles the entire plotting library (~3MB). MCP has a 1MB limit on tool results, so returning HTML inline was never going to work. The server writes it to a temp file and returns the path. The tradeoff is that the file is only accessible locally — you cannot easily share it with someone else without copying the file. An alternative would be to serve the HTML via a local HTTP endpoint, but that adds a web server dependency.
+**Plotly HTML size.** Self-contained Plotly HTML bundles the entire plotting library. MCP has a 1MB limit on tool results, so returning HTML inline was never going to work. The server just writes it to a temp file and returns the path. As result though the file is only accessible locally so you can't easily share it without copying the file. An alternative would be to serve the HTML via a local HTTP endpoint, but didn't try attempting that. 
 
 ---
 
@@ -72,4 +62,4 @@ Matplotlib handles static PNG and then plotly handles interactive HTML. Matplotl
 
 **Data stays in memory forever.** Once a dataset is loaded, it stays in `_dataset_frames` until the server process exits. There is no way to delete a dataset or free memory so for a long-running server processing a bunch of large files this would not be good.
 
-**Limited plot types and very simple ones** Didn't have time to make visualizations more appealing or supportive for more complex data. Was focused on just getting something working first!
+**Limited plot types and very simple ones** Didn't have time to make visualizations more appealing or supportive for more complex data. Same with HTML piece I was more just focused on seeing if could get something working first!
