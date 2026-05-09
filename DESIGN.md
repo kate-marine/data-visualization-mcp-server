@@ -52,7 +52,10 @@ FastMCP server
      └── models.py            — Dataset, VizSpec, Plot (Pydantic)
 ```
 ```
-
+**main.py** 
+- Initialize the server
+- Register all tools and resources
+- Start the MCP server on stdio transport
 
 **datasets.py**    — tools to upload, describe, list datasets
 **transforms.py**  — tools filter, aggregate, sort, and select columns
@@ -68,8 +71,9 @@ FastMCP server
 - Generates an interactive HTML chart based on plot type
 - Returns the full HTML string (with embedded Plotly JS)
 
-**store.py**             — in-memory state (singleton)
-**models.py**           — Dataset, VizSpec, Plot (Pydantic)
+**store.py**             — manages in-memory caching with SQLite backend for datasets and visualization specs, and in-memory storage for rendered plots
+**models.py**           — defines the data models for the server using Pydantic
+**server.py**           - sets up logging, creates the FastMCP server instance, initializes the in-memory store
 ```
 
 Note: All tools share a single `ResourceStore` instance. State is never passed between tools directly it's only through IDs.
