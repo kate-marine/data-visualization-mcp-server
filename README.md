@@ -54,7 +54,7 @@ Matplotlib handles static PNG and then plotly handles interactive HTML. Matplotl
 
 ---
 
-## Biggest issues 
+### Biggest issues 
 
 **suggest_vizspec redundant for LLM clients.** I was originally trying to build suggest_vizspec to let clients describe visualizations in plain English. But once I decided to use an LLM as my client it already does natural language understanding better than any regex. So the tool would only be helpful for non-LLM clients which I never ended up testing. So I kind of ending up abandoning developing this function but figured might has well just leave it in.
 
@@ -66,7 +66,7 @@ Matplotlib handles static PNG and then plotly handles interactive HTML. Matplotl
 
 -----
 
-**Reflection on whether this is something that LLMs are helpful with**
+### Reflection on whether this is something that LLMs are helpful with
 
 Does this tool make it easier to quickly generate visualizations, or is integrating an LLM into this a waste of time? (include details on your solution, i.e. where it struggles, where it is faster than normal, and how you think your design decisions played into that)
 
@@ -75,9 +75,7 @@ For example, doing something like generating a chart of "total marketing spend p
 
 LLMs are also helpful for the persistence issue. You might want to return to the same dataset across multiple conversations and because datasets survive server restarts, Claude can pick up where it left off since you just tell it the dataset name and it finds the ID. Otherwise you would I think need to do the re-uploading and re-describing the data every time.
 
-The VizSpec separation — intent recorded separately from rendering — turned out to be genuinely useful. It lets Claude inspect a spec, realize it's wrong, call update_vizspec, and re-render without starting over. In a more stateless design, every correction would require recreating the whole spec from scratch. Also If the server had a single high-level tool, the LLM would just be a natural language wrapper with no ability to adapt or reason about intermediate state. The granular tool design means the LLM's judgment and flexibility actually get used.
-
-Where it struggles
+Separating the vizspec step from actual generation step is also useful for LLM clients. It lets Claude inspect a spec, and then if there's a problem it realizes and calls update_vizspec and re-renders without starting over. In a more stateless design, every correction would require recreating the whole spec from scratch. Also If the server had a single high-level tool, the LLM would just be a natural language wrapper with no ability to adapt or reason about intermediate state. The step by step tool design means the LLM's judgment actually get used.
 
 That said the LLM is still very limited in that it can’t see the produced visualization and so has no way to verify that it matches what was intended. You can see this with the month ordering problem where charts with months on the x-axis appear alphabetically (Apr, Aug, Dec...) instead of chronologically unless the data happens to be pre-sorted. A human using matplotlib would see this immediately and fix it where Claude can’t.
 
