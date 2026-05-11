@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import sys
 
-# Tool and resource registrations — must import before mcp.run()
-import data_viz_mcp.tools.datasets  # noqa: F401
-import data_viz_mcp.tools.transforms  # noqa: F401
-import data_viz_mcp.tools.specs  # noqa: F401
-import data_viz_mcp.tools.plots  # noqa: F401
+# Tool and resource registrations 
+import data_viz_mcp.tools.datasets  
+import data_viz_mcp.tools.transforms  
+import data_viz_mcp.tools.specs 
+import data_viz_mcp.tools.plots  
 
 from data_viz_mcp.server import logger, mcp
 
