@@ -93,5 +93,35 @@ Explored [What is the Model Context Protocol (MCP)?](https://modelcontextprotoco
 
 First steps
 - Started by thinking about what resources wanted specifically for the server to expose and the first tools I wanted to implement. Also wanted to think about how a client would refer to a dataset it uploaded earlier.
-- Started drafting Design doc (see for rest of process)
+- Started drafting Design doc (see for better description of setup)
+- Some key decisions:
+    - Everything gets a unique ID (ex ds_123 or vs_123 for a visualization) so clients can refer to things across turns
+    - resources are immutable
+    - datasets in a python dictionary while the server is running
 
+Setup 
+
+MCP protocol layer
+The server exposes tools (functions client can call) and resources (data client can read).
+I used the python library FastMCP so that I could define MCP resources and tooling with intuitive Python decorators, as in https://modelcontextprotocol.io/docs/develop/build-server.
+
+The server runs over stdio. Claude Desktop (using for the client) launches it as a subprocess and talks to it through standard input/output. Restarting Claude Desktop restarts the server.
+
+
+Data model
+
+I have Python classes that define every piece of data the server works with (see design doc)
+Dataset: describes what was uploaded, stores metadata like ID, name, column names and types, row count
+VizSpec: visualization instructions, stores which dataset id, what plot type, which columns, optional styling
+Plot: records an output, links back to its VizSpec, stores the PNG bytes and optional HTML
+
+Note: The actual raw tabular data is stored separately in a dictionary keyed by dataset ID, alongside with Dataset metadata. 
+
+4. Memory Storing
+Made a class ResourceStore to hold everything while the server is running. It’s basically a wrapper class around Python dictionaries. Every tool imports the same singleton instance so they all share state.
+
+Note: this works until you restart the server and everything is gone. Later on I tried adding a persistence feature to solve this. Haven’t confirmed it’s working yet
+
+Also note: There are two separate dataset dictionaries. _datasets holds the Dataset object with metadata like name, column names, row count. _dataset_frames holds the actual pandas DataFrame with the raw rows and values. I originally had just one dictionary but then had to make them separate because Dataset is a Pydantic model and Pydantic can't serialize a DataFrame. So they have to be in parallel and share the same ID as the key. (Claude helped me debug this issue and suggested this approach!). 
+
+see design doc for specifics on the different tools
