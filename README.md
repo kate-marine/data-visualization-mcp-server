@@ -3,7 +3,7 @@
 An MCP server that lets clients such as LLMs upload data, define visualizations, and retrieve resutlts as part of a contextual workflow. Built in Python using FastMCP, pandas, matplotlib, and Plotly.
 
 ---
-
+  
 ## What it does
 
 A client (ie Claude Desktop) can:
