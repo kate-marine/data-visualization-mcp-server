@@ -73,15 +73,25 @@ Does this tool make it easier to quickly generate visualizations, or is integrat
 I think it definitely depends on what you're asking the system to do and how much more built out it is. For the version I have working right now integrating an LLM definitely speeds the process.
 For example, doing something like generating a chart of "total marketing spend per customer by city" requires four steps to aggregate marketing spend by city, aggregate customers by city, join or divide those results, then plot. Without an LLM it would require the user to know and do each step at a time, which was actually how I was originally testing things using MCP Inspector. With Claude Desktop as the client though you just ask the one question and Claude figures out the sequence of which order of tools to call and reasons about the results along the way. I think having the describe_dataset tool was actually important for this since without it Claude would be guessing at column names. 
 
-LLMs are also helpful for the persistence issue. You might want to return to the same dataset across multiple conversations and because datasets survive server restarts, Claude can pick up where it left off since you just tell it the dataset name and it finds the ID. Otherwise you would I think need to do the re-uploading and re-describing the data every time.
+The decision of separating the vizspec step from actual generation step is also useful for LLM clients. It lets Claude inspect a spec, and then if there's a problem it realizes and calls update_vizspec and re-renders without starting over. In a more stateless design, every correction would require recreating the whole spec from scratch. Also If the server had a single high-level tool, the LLM would just be a natural language wrapper with no ability to adapt or reason about intermediate state. So the step by step design means you can actually take advantage of the LLM's thinking skills.
 
-Separating the vizspec step from actual generation step is also useful for LLM clients. It lets Claude inspect a spec, and then if there's a problem it realizes and calls update_vizspec and re-renders without starting over. In a more stateless design, every correction would require recreating the whole spec from scratch. Also If the server had a single high-level tool, the LLM would just be a natural language wrapper with no ability to adapt or reason about intermediate state. The step by step tool design means the LLM's judgment actually get used.
+That said the LLM is still very limited in that it can’t see the produced visualization and so has no way to verify that it matches what was intended (I think). You can see this with the month ordering problem where charts with months on the x-axis appear alphabetically (Apr, Aug, Dec...) instead of chronologically unless the data happens to be pre-sorted. A human using matplotlib would see this immediately and fix it where Claude can’t.
 
-That said the LLM is still very limited in that it can’t see the produced visualization and so has no way to verify that it matches what was intended. You can see this with the month ordering problem where charts with months on the x-axis appear alphabetically (Apr, Aug, Dec...) instead of chronologically unless the data happens to be pre-sorted. A human using matplotlib would see this immediately and fix it where Claude can’t.
+Finally if you give it the same prompt twice, Claude might call tools in a different order and ultimately produce a slightly different chart. The server itself is deterministic in that the same tool calls always produce the same result but the LLM layer above it is not so this adds an aspect of unpredictability that could definitely be a problem depending on how you're using it.
 
-Finally if you give it the same prompt twice, Claude might call tools in a different order and ultimately produce a different chart type. The server itself is deterministic in that the same tool calls always produce the same result but the LLM layer above it is not so this adds an aspect of unpredictability that could definitely be a problem
+-----
 
+### Learning process
 
-Overall assessment
+Background Research
 
-Overall, integrating an LLM makes the most sense for exploratory workflows where the user doesn’t know in advance exactly what they want to see. This way the LLM’s ability to chain tools and reason about results is genuinely useful.
+Explored [What is the Model Context Protocol (MCP)?](https://modelcontextprotocol.io/docs/getting-started/intro) to research what exactly is an MCP, how they work, tools vs resources, etc
+- Read through their tutorial on building an mcp server https://modelcontextprotocol.io/docs/develop/build-server 
+- Looked at their GitHub - https://github.com/modelcontextprotocol/python-sdk 
+- Explored reference test server with prompts, resources, and tools https://github.com/modelcontextprotocol/servers/tree/main/src/everything  
+    - Specifically looked at file structure, how the different tools were registered and organized
+
+First steps
+- Started by thinking about what resources wanted specifically for the server to expose and the first tools I wanted to implement. Also wanted to think about how a client would refer to a dataset it uploaded earlier.
+- Started drafting Design doc (see for rest of process)
+
