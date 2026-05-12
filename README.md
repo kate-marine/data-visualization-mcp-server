@@ -115,12 +115,10 @@ Dataset: describes what was uploaded, stores metadata like ID, name, column name
 VizSpec: visualization instructions, stores which dataset id, what plot type, which columns, optional styling
 Plot: records an output, links back to its VizSpec, stores the PNG bytes and optional HTML
 
-Note: The actual raw tabular data is stored separately in a dictionary keyed by dataset ID, alongside with Dataset metadata. 
 
-4. Memory Storing
-Made a class ResourceStore to hold everything while the server is running. It’s basically a wrapper class around Python dictionaries. Every tool imports the same singleton instance so they all share state.
+Memory Storing
 
-Note: this works until you restart the server and everything is gone. Later on I tried adding a persistence feature to solve this. Haven’t confirmed it’s working yet
+Made a class ResourceStore to hold everything while the server is running. It’s basically a wrapper class around Python dictionaries. Every tool imports the same singleton instance so they all share state. (This works until you restart the server and everything is gone. Later on I tried adding a persistence feature to solve this. Haven’t confirmed it’s working yet)
 
 Also note: There are two separate dataset dictionaries. _datasets holds the Dataset object with metadata like name, column names, row count. _dataset_frames holds the actual pandas DataFrame with the raw rows and values. I originally had just one dictionary but then had to make them separate because Dataset is a Pydantic model and Pydantic can't serialize a DataFrame. So they have to be in parallel and share the same ID as the key. (Claude helped me debug this issue and suggested this approach!). 
 
